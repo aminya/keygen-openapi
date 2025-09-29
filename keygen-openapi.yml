@@ -5558,10 +5558,14 @@ paths:
                         - channel
                       properties:
                         name:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The human-readable name of the release.
                         description:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The description of the release. Useful for releases notes.
                         status:
                           type: string
@@ -5572,7 +5576,9 @@ paths:
                           type: string
                           description: The version of the release. Must be a valid semantic version string.
                         tag:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The tag for the release, used for lookups.
                         channel:
                           type: string
@@ -5585,6 +5591,8 @@ paths:
                       properties:
                         product:
                           type: object
+                          required:
+                            - data
                           properties:
                             data:
                               type: object
@@ -5600,6 +5608,8 @@ paths:
                                   format: uuid
                         package:
                           type: object
+                          required:
+                            - data
                           properties:
                             data:
                               type: object
@@ -9559,6 +9569,10 @@ components:
             semver:
               type: object
               description: Object containing deconstructed key-value semver components.
+              required:
+                - major
+                - minor
+                - patch
               properties:
                 major:
                   type: integer
