@@ -5598,6 +5598,21 @@ paths:
                                 id:
                                   type: string
                                   format: uuid
+                        package:
+                          type: object
+                          properties:
+                            data:
+                              type: object
+                              required:
+                                - type
+                                - id
+                              properties:
+                                type:
+                                  type: string
+                                  enum: [packages]
+                                id:
+                                  type: string
+                                  format: uuid
       responses:
         "201":
           description: Release created successfully
