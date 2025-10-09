@@ -5558,10 +5558,14 @@ paths:
                         - channel
                       properties:
                         name:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The human-readable name of the release.
                         description:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The description of the release. Useful for releases notes.
                         status:
                           type: string
@@ -5572,7 +5576,9 @@ paths:
                           type: string
                           description: The version of the release. Must be a valid semantic version string.
                         tag:
-                          type: string
+                          type:
+                            - string
+                            - "null"
                           description: The tag for the release, used for lookups.
                         channel:
                           type: string
@@ -5585,6 +5591,8 @@ paths:
                       properties:
                         product:
                           type: object
+                          required:
+                            - data
                           properties:
                             data:
                               type: object
@@ -5595,6 +5603,23 @@ paths:
                                 type:
                                   type: string
                                   enum: [products]
+                                id:
+                                  type: string
+                                  format: uuid
+                        package:
+                          type: object
+                          required:
+                            - data
+                          properties:
+                            data:
+                              type: object
+                              required:
+                                - type
+                                - id
+                              properties:
+                                type:
+                                  type: string
+                                  enum: [packages]
                                 id:
                                   type: string
                                   format: uuid
@@ -5658,6 +5683,7 @@ paths:
             application/vnd.api+json:
               schema:
                 type: object
+                title: ListReleasesResponse
                 properties:
                   data:
                     type: array
@@ -5665,6 +5691,9 @@ paths:
                       $ref: "#/components/schemas/Release"
                   links:
                     $ref: "#/components/schemas/PaginationLinks"
+                required:
+                  - data
+                  - links
         default:
           $ref: "#/components/responses/Error"
       security:
@@ -9514,10 +9543,14 @@ components:
           type: object
           properties:
             name:
-              type: string
+              type:
+                - string
+                - "null"
               description: The human-readable name of the release.
             description:
-              type: string
+              type:
+                - string
+                - "null"
               description: The description of the release.
             channel:
               type: string
@@ -9536,6 +9569,10 @@ components:
             semver:
               type: object
               description: Object containing deconstructed key-value semver components.
+              required:
+                - major
+                - minor
+                - patch
               properties:
                 major:
                   type: integer
@@ -9544,9 +9581,19 @@ components:
                 patch:
                   type: integer
                 prerelease:
-                  type: string
+                  type:
+                    - string
+                    - "null"
                 build:
-                  type: string
+                  type:
+                    - string
+                    - "null"
+            metadata:
+              type: object
+              additionalProperties: true
+              description: |
+                Object containing release metadata. This can be used to store things such as hash checksums,
+                e.g. SHA-256 and SHA-512, for integrity verification after download, or for release notes.
             created:
               type: string
               format: date-time
@@ -9555,10 +9602,33 @@ components:
               type: string
               format: date-time
               description: When the release was last updated.
+            backdated:
+              type:
+                - string
+                - "null"
+              format: date-time
+              description: |
+                When the release was backdated to. This can be used to e.g. allow expired licenses under a
+                `MAINTAIN_ACCESS` or `RESTRICT_ACCESS` expiration strategy to access new patch releases.
             yanked:
-              type: string
+              type:
+                - string
+                - "null"
               format: date-time
               description: When the release was yanked.
+          required:
+            - name
+            - description
+            - channel
+            - status
+            - tag
+            - version
+            - semver
+            - metadata
+            - created
+            - updated
+            - backdated
+            - yanked
         relationships:
           type: object
           properties:
@@ -9647,6 +9717,12 @@ components:
             self:
               type: string
               format: uri
+      required:
+        - id
+        - type
+        - attributes
+        - relationships
+        - links
 
     ReleaseResponse:
       type: object
