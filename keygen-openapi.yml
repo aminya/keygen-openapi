@@ -6363,7 +6363,294 @@ paths:
       responses:
         '204':
           description: Artifact queued for deletion
+  /accounts/{account}/packages:
+    get:
+      tags:
+        - Packages
+      operationId: listPackages
+      summary: List all packages
+      description: |
+        Returns a list of packages. The packages are returned sorted by creation date, with the most recent published
+        packages appearing first. Resources are automatically scoped to the authenticated bearer e.g. when authenticated
+        as a license or user, only packages accessible by the requestor will be listed.
+      parameters:
+        - $ref: "#/components/parameters/Account"
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/Limit"
+          description: A limit on the number of packages to be returned.
+        - name: product
+          in: query
+          description: The identifier (UUID) of the product to filter by.
+          schema:
+            type: string
+            format: uuid
+        - name: engine
+          in: query
+          description: The identifier (UUID) or key of the engine to filter by.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Packages retrieved successfully
+          content:
+            application/vnd.api+json:
+              schema:
+                title: ListPackagesResponse
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Package"
+                  links:
+                    $ref: "#/components/schemas/PaginationLinks"
+                required:
+                  - data
+                  - links
+        default:
+          $ref: "#/components/responses/Error"
+    post:
+      tags:
+        - Packages
+      operationId: createPackage
+      summary: Create a package
+      description: |
+        Creates a new package resource. Packages can be used to enable an engine for a product. In addition,
+        they can be used to group releases. For example, you can have a single product offering a PyPI toolset,
+        with multiple packages all released and versioned separately.
+      parameters:
+        - $ref: "#/components/parameters/Account"
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              title: CreatePackageRequest
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [packages]
+                    attributes:
+                      type: object
+                      properties:
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: |
+                            The human-readable name of the package. This can be used as an optional label.
+                        key:
+                          type: string
+                          description: |
+                            The machine-readable key of the package.
+                        engine:
+                          type:
+                            - string
+                            - "null"
+                          enum:
+                            - pypi
+                            - tauri
+                            - raw
+                            - rubygems
+                          description: |
+                            The engine for the package. Set to `null` for no engine.
 
+                            **Options**
+                            - `pypi`: For releasing PyPI packages. Artifacts can be installed using `pip`.
+                            - `tauri`: For releasing Tauri apps. Compatible with Tauri's auto-updater.
+                            - `raw`: For releasing raw binaries, installers, etc.
+                            - `rubygems`: For releasing Ruby gems. Artifacts can be installed using `bundler` or `gem`.
+                        metadata:
+                          type: object
+                          description: |
+                            Object containing package metadata. This can be used to store arbitrary key-value data,
+                            e.g. for book keeping or display purposes.
+                          additionalProperties: true
+                      required:
+                        - key
+                    relationships:
+                      type: object
+                      properties:
+                        product:
+                          type: object
+                          description: The product the package is for.
+                          properties:
+                            data:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                  enum: [products]
+                                id:
+                                  type: string
+                              required:
+                                - type
+                                - id
+                          required:
+                            - data
+                      required:
+                        - product
+                  required:
+                    - type
+                    - attributes
+                    - relationships
+              required:
+                - data
+      responses:
+        "201":
+          description: Package created successfully
+          content:
+            application/vnd.api+json:
+              schema:
+                title: CreatePackageResponse
+                typ: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Package"
+                required:
+                  - data
+        default:
+          $ref: "#/components/responses/Error"
+  /accounts/{account}/packages/{package}:
+    get:
+      tags:
+        - Packages
+      operationId: retrievePackage
+      summary: Retrieve a package
+      description: Retrieves the details of an existing package.
+      parameters:
+        - $ref: "#/components/parameters/Account"
+        - name: package
+          in: path
+          description: The identifier (UUID) or key of the package to be retrieved.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Package retrieved successfully
+          content:
+            application/vnd.api+json:
+              schema:
+                title: RetrievePackageResponse
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Package"
+                required:
+                  - data
+        default:
+          $ref: "#/components/responses/Error"
+    patch:
+      tags:
+        - Packages
+      operationId: updatePackage
+      summary: Update a package
+      description: |
+        Updates the specified package resource by setting the values of the parameters passed. Any parameters
+        not provided will be left unchanged.
+      parameters:
+        - $ref: "#/components/parameters/Account"
+        - name: package
+          in: path
+          description: The identifier (UUID) or key of the package to be updated.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              title: UpdatePackageRequest
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [packages]
+                    attributes:
+                      type: object
+                      properties:
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: |
+                            The human-readable name of the package. This can be used as an optional label.
+                        key:
+                          type: string
+                          description: |
+                            The machine-readable key of the package.
+                        engine:
+                          type:
+                            - string
+                            - "null"
+                          enum:
+                            - pypi
+                            - tauri
+                            - raw
+                            - rubygems
+                          description: |
+                            The engine for the package. Set to `null` for no engine.
+
+                            **Options**
+                            - `pypi`: For releasing PyPI packages. Artifacts can be installed using `pip`.
+                            - `tauri`: For releasing Tauri apps. Compatible with Tauri's auto-updater.
+                            - `raw`: For releasing raw binaries, installers, etc.
+                            - `rubygems`: For releasing Ruby gems. Artifacts can be installed using `bundler` or `gem`.
+                        metadata:
+                          type: object
+                          description: |
+                            Object containing package metadata. This can be used to store arbitrary key-value data,
+                            e.g. for book keeping or display purposes.
+                          additionalProperties: true
+                  required:
+                    - type
+                    - attributes
+              required:
+                - data
+      responses:
+        "200":
+          description: Package updated successfully
+          content:
+            application/vnd.api+json:
+              schema:
+                title: UpdatePackageResponse
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Package"
+                required:
+                  - data
+        default:
+          $ref: "#/components/responses/Error"
+    delete:
+      tags:
+        - Packages
+      operationId: deletePackage
+      summary: Delete a package
+      description: |
+        Permanently deletes a package. It cannot be undone. This action also immediately deletes any releases
+        and artifacts that the package is associated with.
+      parameters:
+        - $ref: "#/components/parameters/Account"
+        - name: package
+          in: path
+          description: The identifier (UUID) or key of the package to be deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Package deleted successfully
+        default:
+          $ref: "#/components/responses/Error"
 
 webhooks:
   event:
@@ -9943,6 +10230,141 @@ components:
             related:
               type: string
               format: uri
+    Package:
+      type: object
+      description: |
+        Below you will find the various attributes for the package resource, as well as the package resource's relationships.
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [packages]
+        attributes:
+          type: object
+          properties:
+            name:
+              type:
+                - string
+                - "null"
+              description: The human-readable name of the package. This can be used as an optional label.
+            key:
+              type: string
+              description: The machine-readable key of the package.
+            engine:
+              type:
+                - string
+                - "null"
+              enum:
+                - pypi
+                - tauri
+                - raw
+                - rubygems
+              description: |
+                The engine for the package. Set to `null` for no engine.
+
+                **Options**
+                - `pypi`: For releasing PyPI packages. Artifacts can be installed using `pip`.
+                - `tauri`: For releasing Tauri apps. Compatible with Tauri's auto-updater.
+                - `raw`: For releasing raw binaries, installers, etc.
+                - `rubygems`: For releasing Ruby gems. Artifacts can be installed using `bundler` or `gem`.
+            metadata:
+              type: object
+              description: |
+                Object containing package metadata. This can be used to store arbitrary key-value data, e.g. for book
+                keeping or display purposes.
+              additionalProperties: true
+            created:
+              type: string
+              format: date-time
+              description: When the package was created.
+            updated:
+              type: string
+              format: date-time
+              description: When the package was last updated.
+          required:
+            - name
+            - key
+            - engine
+            - metadata
+            - created
+            - updated
+        relationships:
+          type: object
+          properties:
+            account:
+              type: object
+              description: The account that the package belongs to.
+              properties:
+                links:
+                  $ref: "#/components/schemas/RelatedLinks"
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [accounts]
+                    id:
+                      type: string
+                  required:
+                    - type
+                    - id
+              required:
+                - data
+                - links
+            environment:
+              type: object
+              description: The environment that the package belongs to.
+              properties:
+                links:
+                  $ref: "#/components/schemas/RelatedLinks"
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [environments]
+                    id:
+                      type: string
+                  required:
+                    - type
+                    - id
+              required:
+                - links
+                - data
+            product:
+              type: object
+              description: The product that the package belongs to.
+              properties:
+                links:
+                  $ref: "#/components/schemas/RelatedLinks"
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum: [products]
+                    id:
+                      type: string
+                  required:
+                    - type
+                    - id
+              required:
+                - data
+                - links
+          required:
+            - account
+            - environment
+            - product
+        links:
+          $ref: "#/components/schemas/SelfLinks"
+      required:
+        - id
+        - type
+        - attributes
+        - relationships
+        - links
+
     Error:
       type: object
       properties:
